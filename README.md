@@ -1,2 +1,19 @@
-# Scale-Wizard
-Visualize various scales on a guitar's fretboard or identify a scale given several notes you specify.
+# Scale Wizard
+
+A guitar fretboard tool to visualize scales and identify scales from selected notes.
+
+## Features
+- View scales across the fretboard
+- Select root note and scale type
+- Color-coded note display
+
+## Live Demo
+[Try it here](https://yourusername.github.io/Scale-Wizard)
+
+## Roadmap
+- Add more scales
+- Pan/zoom functionality
+- Reverse scale finder
+- Improve note alignment
+
+Built as a learning project and personal tool for guitar practice.
