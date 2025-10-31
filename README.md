@@ -8,7 +8,7 @@ A guitar fretboard tool to visualize scales and identify scales from selected no
 - Color-coded note display
 
 ## Live Demo
-[Try it here](https://yourusername.github.io/Scale-Wizard)
+[Try it here](https://rrozz.github.io/Scale-Wizard)
 
 ## Roadmap
 - Add more scales
@@ -17,3 +17,5 @@ A guitar fretboard tool to visualize scales and identify scales from selected no
 - Improve note alignment
 
 Built as a learning project and personal tool for guitar practice.
+
+© 2025 Tyler Markham
