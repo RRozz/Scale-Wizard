@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<head>
+<link rel="shortcut icon" href="ScaleWizardIcon.png" type="image/x-icon">
+<title>Scale Wizard</title>
+<style>
+*{
+	margin:0px;
+	padding:0px;
+}
+body{
+	overflow:hidden;
+}
+canvas{
+	width:100vw;
+	height:100vh;
+}
+.scale_selector{
+	position:fixed;
+	left:20px;
+	top:5px;
+}
+.scale_selector *{
+	background-color:purple;
+	color:white;
+	border: 2px solid yellow;
+	z-index:1000;
+	padding: 8px 16px;
+	font-weight:bold;
+}
+.draw_scale_button, .clear_markers_button{
+	background-color:purple;
+	color:white;
+	border: 2px solid yellow;
+	padding:8px 16px;
+	position:fixed;
+	z-index:1000;
+	font-weight:bold;
+}
+.draw_scale_button{
+	top:5px;
+	left:300px;
+}
+.clear_markers_button{
+	top:5px;
+	left:500px;
+}
+footer{
+	position:fixed;
+	bottom:5px;
+	z-index:1002;
+	color:white;
+}
+footer a{
+	color:white;
+}
+</style>
+<script src='logic.js'></script>
+<script>
+var myCanvas;
+var c; // canvas context
+var scaleSelectorComboBox;
+var rootSelectorComboBox;
+var fretboard;
+const stringPositions = [401, 415, 431, 445, 459, 474];
+const fretPositions = [79, 143, 217, 284, 349, 409, 465, 518, 570, 616, 660, 705, 741, 782, 816, 847, 878, 907, 938, 963, 987, 1012, 1034];
+const markerRadius = 11; // pixels max due to fretboard image size constraints
+const markerOctaveColorCode = ['gray', 'black', 'brown', 'yellow', 'green', 'blue', 'red', 'orange']; // note: there is no octave 0
+
+function Marker(color, text, x, y){
+	this.color = color;
+	this.text = text;
+	this.x = x;
+	this.y = y;
+}
+
+function Fret(noteIndex, octave, x, y){
+	this.note = noteIndex;
+	this.octave = octave;
+	this.x = x;
+	this.y = y;
+}
+
+// main wrapper for all visual elements
+function Imagery(){
+	this.fretboardImage = new Image();
+	this.fretboard_x = 0;
+	this.fretboard_y = 0;
+	this.fretboard_scale = 1.0;
+	this.fretboard_w = 1184;
+	this.fretboard_h = 864;
+	
+	// zoom in and out and pan by %
+	this.fretboard_zoom = 1.0;
+	this.fretboard_zoom_max = 3.76;
+	this.fretboard_zoom_min = 1.0;
+	
+	this.fretboard_pan_x = 0.0;
+	this.fretboard_pan_min = 0.0;
+	this.fretboard_pan_max = 1.0;
+	
+	this.fretCount = 22; // frets on this fretboard model
+	this.strings = 6;
+	this.stringTuning = [noteIndices['E'], noteIndices['B'], noteIndices['G'], noteIndices['D'], noteIndices['A'], noteIndices['E']];
+	this.stringOctaves = [4, 3, 3, 3, 2, 2];
+	this.frets = [];
+	
+	// high e = 0, low E = 5
+	for(var stringIndex = 0;stringIndex < this.strings;stringIndex++){
+		let note = this.stringTuning[stringIndex];
+		let octave = this.stringOctaves[stringIndex];
+		
+		for(var fretIndex = 0;fretIndex <= this.fretCount;fretIndex++){
+			this.frets.push(new Fret(note, octave, fretPositions[fretIndex], stringPositions[stringIndex]));
+			
+			// increment this string's note for the next fret
+			note++;
+			if(note == 12){
+				note = 0; // wrap around to C
+				octave++; // and increase the octave
+			}
+		}
+	}
+	
+	
+	this.markers = []; // frets to be 'highlighted' via marker overlays
+	
+	// update the canvas screen
+	this.draw = function(){
+		console.log("DEBUG: draw()");
+		c.drawImage(this.fretboardImage, 0, 0);
+		
+		// draw markers (highlighted frets)
+		console.log("DEBUG: drawing " + this.markers.length + " markers.");
+		for(var markerIndex = 0, markerCount = this.markers.length;markerIndex < markerCount;markerIndex++){
+			c.beginPath();
+			
+			// set the circle area/path
+			c.arc(this.markers[markerIndex].x, this.markers[markerIndex].y, markerRadius, 0, 2 * Math.PI);
+			
+			// fill with color
+			c.fillStyle = this.markers[markerIndex].color;
+			c.fill();
+			
+			// draw an outline around the circle
+			c.lineWidth = 2;
+			c.strokeStyle = 'black';
+			c.stroke();
+		}
+	}
+	
+	this.markScale = function(scaleNotes){
+		this.markers = [];
+		
+		for(var fretIndex = 0, fretsLen = this.frets.length;fretIndex < fretsLen;fretIndex++){
+			if(scaleNotes.indexOf(this.frets[fretIndex].note) >= 0){
+				this.markers.push(new Marker(markerOctaveColorCode[this.frets[fretIndex].octave], "", this.frets[fretIndex].x, this.frets[fretIndex].y));
+			}
+		}
+		
+		this.draw();
+	}
+	
+	this.addUserMarker = function(fretIndex){
+		this.markers.push(new Marker(markerOctaveColorCode[this.frets[fretIndex].octave], "", this.frets[fretIndex].x, this.frets[fretIndex].y));
+		
+		this.draw();
+	}
+	
+	this.removeSpecifiedMarker = function(markerIndex){
+		this.markers.splice(markerIndex, 1);
+		this.draw();
+	}
+	
+	this.clearMarkers = function(){
+		this.markers = [];
+		this.draw();
+	}
+	
+	this.allResourcesLoaded = function(){
+		console.log("DEBUG: All resources loaded");
+		//myCanvas.width = this.fretboardImage.naturalWidth;
+		//myCanvas.height = this.fretboardImage.naturalHeight;
+		myCanvas.width = document.body.clientWidth;
+		myCanvas.height = document.body.clientHeight;
+		
+		this.draw();
+		
+		console.log("Canvas resolution: " + myCanvas.width + " x " + myCanvas.height);
+		console.log("Canvas dimensions: " + myCanvas.clientWidth + " x " + myCanvas.clientHeight);
+	}.bind(this);
+	
+	this.fretboardImage.onload = this.allResourcesLoaded;
+	this.fretboardImage.src = "fretboard.jpg";
+	console.log("DEBUG: resources set to be loaded");
+}
+
+function invokeMarkScale(){
+	let root = rootSelectorComboBox.value;
+	let scale = scaleSelectorComboBox.value;
+	
+	switch(scale){
+		case "Major":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MAJOR) );
+			break;
+		}
+		case "Natural Minor":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_NATURAL_MINOR) );
+			break;
+		}
+		default:{
+			alert("Error: invalid scale selected");
+			break;
+		}
+	}
+}
+
+function init(){
+	console.log('initialization started');
+	
+	scaleSelectorComboBox = document.getElementById('scaleSelectorComboBox');
+	rootSelectorComboBox = document.getElementById('rootSelectorComboBox');
+	myCanvas = document.getElementById('ScaleWizardCanvas');
+	c = myCanvas.getContext('2d');
+	
+	fretboard = new Imagery();
+	console.log("DEBUG: fretboard creation completed");
+	
+	// highlight a Major C scale
+	fretboard.markScale(
+		enumerateScale( noteIndices['C'], SCALE_STEPS_MAJOR
+	));
+	
+	console.log("DEBUG: C Major scale drawn");
+	
+	console.log("Scale Wizard initialized");
+}
+</script>
+</head>
+<body onload='init()'>
+<canvas id='ScaleWizardCanvas' width='1184' height='864'></canvas>
+<div class='scale_selector'>
+	<select id='rootSelectorComboBox'>
+		<option>C</option>
+		<option>C#</option>
+	</select>
+	<select id='scaleSelectorComboBox'>
+		<option>Major</option>
+		<option>Natural Minor</option>
+	</select>
+</div>
+<button class='draw_scale_button' onclick='invokeMarkScale()'>Draw Scale</button>
+<button class='clear_markers_button' onclick='fretboard.clearMarkers()'>Clear Markers</button>
+<footer id='footerx' style="text-align:center; padding:20px; font-size:12px;">Built by Tyler Markham &copy; 2025 | <a href="https://github.com/RRozz/Scale-Wizard">Source Code</a></footer>
+</body>
+</html>
