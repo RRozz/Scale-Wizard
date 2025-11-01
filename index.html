@@ -207,6 +207,14 @@ function invokeMarkScale(){
 			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_NATURAL_MINOR) );
 			break;
 		}
+		case "Minor Blues":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MINOR_BLUES) );
+			break;
+		}
+		case "Major Blues":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MAJOR_BLUES) );
+			break;
+		}
 		default:{
 			alert("Error: invalid scale selected");
 			break;
@@ -242,10 +250,22 @@ function init(){
 	<select id='rootSelectorComboBox'>
 		<option>C</option>
 		<option>C#</option>
+		<option>D</option>
+		<option>D#</option>
+		<option>E</option>
+		<option>F</option>
+		<option>F#</option>
+		<option>G</option>
+		<option>G#</option>
+		<option>A</option>
+		<option>A#</option>
+		<option>B</option>
 	</select>
 	<select id='scaleSelectorComboBox'>
 		<option>Major</option>
 		<option>Natural Minor</option>
+		<option>Minor Blues</option>
+		<option>Major Blues</option>
 	</select>
 </div>
 <button class='draw_scale_button' onclick='invokeMarkScale()'>Draw Scale</button>

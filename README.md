@@ -10,6 +10,13 @@ A guitar fretboard tool to visualize scales and identify scales from selected no
 ## Live Demo
 [Try it here](https://rrozz.github.io/Scale-Wizard)
 
+![Screenshot](scale-wizard-preview.png)
+
+## How to Use
+1. Select a root note (ex: C)
+2. Select a scale type (ex: Major)
+3. Click the Draw Scale button to show notes in the scale
+
 ## Roadmap
 - Add more scales
 - Pan/zoom functionality
