@@ -207,12 +207,48 @@ function invokeMarkScale(){
 			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_NATURAL_MINOR) );
 			break;
 		}
+		case "Major Blues":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MAJOR_BLUES) );
+			break;
+		}
 		case "Minor Blues":{
 			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MINOR_BLUES) );
 			break;
 		}
-		case "Major Blues":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MAJOR_BLUES) );
+		case "Major Pentatonic":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MAJOR_PENTATONIC) );
+			break;
+		}
+		case "Minor Pentatonic":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MINOR_PENTATONIC) );
+			break;
+		}
+		case "Ionian Mode":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_IONIAN) );
+			break;
+		}
+		case "Dorian Mode":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_DORIAN) );
+			break;
+		}
+		case "Phrygian Mode":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_PHRYGIAN) );
+			break;
+		}
+		case "Lydian Mode":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_LYDIAN) );
+			break;
+		}
+		case "Mixolydian Mode":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MIXOLYDIAN) );
+			break;
+		}
+		case "Aeolian Mode":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_AEOLIAN) );
+			break;
+		}
+		case "Locrian Mode":{
+			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_LOCRIAN) );
 			break;
 		}
 		default:{
@@ -264,8 +300,10 @@ function init(){
 	<select id='scaleSelectorComboBox'>
 		<option>Major</option>
 		<option>Natural Minor</option>
-		<option>Minor Blues</option>
 		<option>Major Blues</option>
+		<option>Minor Blues</option>
+		<option>Major Pentatonic</option>
+		<option>Minor Pentatonic</option>
 	</select>
 </div>
 <button class='draw_scale_button' onclick='invokeMarkScale()'>Draw Scale</button>

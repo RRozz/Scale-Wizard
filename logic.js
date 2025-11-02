@@ -13,6 +13,15 @@ const SCALE_STEPS_MAJOR = [W, W, H, W, W, W, H];
 const SCALE_STEPS_NATURAL_MINOR = [W, H, W, W, H, W, W];
 const SCALE_STEPS_MINOR_BLUES = [A, W, H, H, A, W];
 const SCALE_STEPS_MAJOR_BLUES = [W, H, H, A, W, A];
+const SCALE_STEPS_MINOR_PENTATONIC = [W, W, A, A, W];
+const SCALE_STEPS_MAJOR_PENTATONIC = [A, W, W, A, W];
+const SCALES_STEPS_IONIAN = [W, W, H, W, W, W, H];
+const SCALES_STEPS_DORIAN = [W, H, W, W, W, H, W];
+const SCALES_STEPS_PHRYGIAN = [H, W, W, W, H, W, W];
+const SCALES_STEPS_LYDIAN = [W, W, W, H, W, W, H];
+const SCALES_STEPS_MIXOLYDIAN = [W, H, W, W, H, W, W];
+const SCALES_STEPS_AEOLIAN = [W, H, W, WH, W, W];
+const SCALES_STEPS_LOCRIAN = [H, W, W, H, W, W, W];
 
 
 // notes are an integer 0-11
@@ -76,7 +85,7 @@ function nameScale(noteList){
 // this means checking that a set of specified notes is a subset of notes within an enumeration of a scale
 // if a note in the specified set is NOT within a particular scale enumeration, it is not that scale
 
-// return true if innerSet is a subset of outerSet, implying innserSet has no elements that are not in outerSet
+// return true if innerSet is a subset o4f outerSet, implying innserSet has no elements that are not in outerSet
 function isSubset(innerSet, outerSet){
 	if(innerSet.length > outerSet.length) return false;
 	
@@ -105,6 +114,13 @@ function listContainingScales(noteSet){
 		}
 	}
 	
+	// major blues scales
+	for(var xint = 0;xint < 12;xint++){
+		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MAJOR_BLUES))){
+			matchedScales.push(noteNames[xint] + " Major Blues");
+		}
+	}
+	
 	// minor blues scales
 	for(var xint = 0;xint < 12;xint++){
 		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MINOR_BLUES))){
@@ -112,10 +128,66 @@ function listContainingScales(noteSet){
 		}
 	}
 	
-	// major blues scales
+	// major pentatonic
 	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MAJOR_BLUES))){
-			matchedScales.push(noteNames[xint] + " Major Blues");
+		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MAJOR_PENTATONIC))){
+			matchedScales.push(noteNames[xint] + " Major Pentatonic");
+		}
+	}
+	
+	// minor pentatonic
+	for(var xint = 0;xint < 12;xint++){
+		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MINOR_PENTATONIC))){
+			matchedScales.push(noteNames[xint] + " Minor Pentatonic");
+		}
+	}
+	
+	// ionian
+	for(var xint = 0;xint < 12;xint++){
+		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_IONIAN))){
+			matchedScales.push(noteNames[xint] + " Ionian");
+		}
+	}
+	
+	// dorian
+	for(var xint = 0;xint < 12;xint++){
+		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_DORIAN))){
+			matchedScales.push(noteNames[xint] + " Dorian");
+		}
+	}
+	
+	// phrygian
+	for(var xint = 0;xint < 12;xint++){
+		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_PHRYGIAN))){
+			matchedScales.push(noteNames[xint] + " Phrygian");
+		}
+	}
+	
+	// lydian
+	for(var xint = 0;xint < 12;xint++){
+		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_LYDIAN))){
+			matchedScales.push(noteNames[xint] + " Lydian");
+		}
+	}
+	
+	// mixolydian
+	for(var xint = 0;xint < 12;xint++){
+		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MIXOLYDIAN))){
+			matchedScales.push(noteNames[xint] + " Mixolydian");
+		}
+	}
+	
+	// aeolian
+	for(var xint = 0;xint < 12;xint++){
+		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_AEOLIAN))){
+			matchedScales.push(noteNames[xint] + " Aeolian");
+		}
+	}
+	
+	// locrian
+	for(var xint = 0;xint < 12;xint++){
+		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_LOCRIAN))){
+			matchedScales.push(noteNames[xint] + " Locrian");
 		}
 	}
 	
