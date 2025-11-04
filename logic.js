@@ -4,29 +4,39 @@ Tyler Markham
 For Scale Wizard project, backend musical logic and tools
 */
 
-const W = 2; // whole step/tone
-const H = 1; // half step/semi-tone
-const A = 3; // augmented third
+const H = 1; // half step / semi-tone
+const W = 2; // whole step / tone
+const A = 3; // augmented second
 
-const SCALE_STEPS_CHROMATIC = [H, H, H, H, H, H, H, H, H, H, H, H];
-const SCALE_STEPS_MAJOR = [W, W, H, W, W, W, H];
-const SCALE_STEPS_NATURAL_MINOR = [W, H, W, W, H, W, W];
-const SCALE_STEPS_MINOR_BLUES = [A, W, H, H, A, W];
-const SCALE_STEPS_MAJOR_BLUES = [W, H, H, A, W, A];
-const SCALE_STEPS_MINOR_PENTATONIC = [W, W, A, A, W];
-const SCALE_STEPS_MAJOR_PENTATONIC = [A, W, W, A, W];
-const SCALES_STEPS_IONIAN = [W, W, H, W, W, W, H];
-const SCALES_STEPS_DORIAN = [W, H, W, W, W, H, W];
-const SCALES_STEPS_PHRYGIAN = [H, W, W, W, H, W, W];
-const SCALES_STEPS_LYDIAN = [W, W, W, H, W, W, H];
-const SCALES_STEPS_MIXOLYDIAN = [W, H, W, W, H, W, W];
-const SCALES_STEPS_AEOLIAN = [W, H, W, WH, W, W];
-const SCALES_STEPS_LOCRIAN = [H, W, W, H, W, W, W];
+var scales = [];
+function addScale(name, steps){
+	scales.push({"name":name, "steps":steps});
+}
+
+addScale("Chromatic", [H, H, H, H, H, H, H, H, H, H, H, H]);
+addScale("Major", [W, W, H, W, W, W, H]);
+addScale("Natural Minor", [W, H, W, W, H, W, W]);
+addScale("Major Blues", [W, H, H, A, W, A]);
+addScale("Minor Blues", [A, W, H, H, A, W]);
+addScale("Major Pentatonic", [A, W, W, A, W]);
+addScale("Minor Pentatonic", [W, W, A, A, W]);
+addScale("Ionian Mode", [W, W, H, W, W, W, H]);
+addScale("Dorian Mode", [W, H, W, W, W, H, W]);
+addScale("Phrygian Mode", [H, W, W, W, H, W, W]);
+addScale("Lydian Mode", [W, W, W, H, W, W, H]);
+addScale("Mixolydian Mode", [W, H, W, W, H, W, W]);
+addScale("Aeolian Mode", [W, H, W, W, H, W, W]);
+addScale("Locrian Mode", [H, W, W, H, W, W, W]);
 
 
 // notes are an integer 0-11
 const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const noteIndices = {'C':0,'C#':1,'D':2,'D#':3,'E':4,'F':5,'F#':6,'G':7,'G#':8,'A':9,'A#':10,'B':11};
+
+// for debug access to scales by name (e.g. scalesByName['Major'].steps)
+var scalesByName = [];
+for(var i = 0, len = scales.length; i < len;i++)
+	scalesByName[scales[i].name] = scales[i];
 
 
 function RollingNumber(defaultValue, maxValue){
@@ -100,94 +110,11 @@ function listContainingScales(noteSet){
 	
 	let matchedScales = [];
 	
-	// check major scales
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MAJOR))){
-			matchedScales.push(noteNames[xint] + " Major");
-		}
-	}
-	
-	// natural minor scales
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_NATURAL_MINOR))){
-			matchedScales.push(noteNames[xint] + " Natural Minor");
-		}
-	}
-	
-	// major blues scales
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MAJOR_BLUES))){
-			matchedScales.push(noteNames[xint] + " Major Blues");
-		}
-	}
-	
-	// minor blues scales
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MINOR_BLUES))){
-			matchedScales.push(noteNames[xint] + " Minor Blues");
-		}
-	}
-	
-	// major pentatonic
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MAJOR_PENTATONIC))){
-			matchedScales.push(noteNames[xint] + " Major Pentatonic");
-		}
-	}
-	
-	// minor pentatonic
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MINOR_PENTATONIC))){
-			matchedScales.push(noteNames[xint] + " Minor Pentatonic");
-		}
-	}
-	
-	// ionian
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_IONIAN))){
-			matchedScales.push(noteNames[xint] + " Ionian");
-		}
-	}
-	
-	// dorian
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_DORIAN))){
-			matchedScales.push(noteNames[xint] + " Dorian");
-		}
-	}
-	
-	// phrygian
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_PHRYGIAN))){
-			matchedScales.push(noteNames[xint] + " Phrygian");
-		}
-	}
-	
-	// lydian
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_LYDIAN))){
-			matchedScales.push(noteNames[xint] + " Lydian");
-		}
-	}
-	
-	// mixolydian
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_MIXOLYDIAN))){
-			matchedScales.push(noteNames[xint] + " Mixolydian");
-		}
-	}
-	
-	// aeolian
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_AEOLIAN))){
-			matchedScales.push(noteNames[xint] + " Aeolian");
-		}
-	}
-	
-	// locrian
-	for(var xint = 0;xint < 12;xint++){
-		if(isSubset(noteSet, enumerateScale(xint, SCALE_STEPS_LOCRIAN))){
-			matchedScales.push(noteNames[xint] + " Locrian");
+	for(var i = 0, len = scales.length;i < len;i++){
+		for(var scaleDegree = 0;scaleDegree < 12;scaleDegree++){
+			if(isSubset(noteSet, enumerateScale(scaleDegree, scales[i].steps))){
+				matchedScales.push(noteNames[scaleDegree] + " " + scales[i].name);
+			}
 		}
 	}
 	

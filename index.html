@@ -35,6 +35,7 @@ canvas{
 	position:fixed;
 	z-index:1000;
 	font-weight:bold;
+	border-radius:12px;
 }
 .draw_scale_button{
 	top:5px;
@@ -53,6 +54,22 @@ footer{
 footer a{
 	color:white;
 }
+.customCheckbox{
+	position:fixed;
+	top:5px;
+	left:5px;
+	z-index:1001;
+	color:white;
+}
+.customCheckbox div{
+	width:25px;
+	height:25px;
+	text-align:center;
+	background-color:purple;
+	color:white;
+	border-radius:12px;
+	border:2px solid yellow;
+}
 </style>
 <script src='logic.js'></script>
 <script>
@@ -60,6 +77,8 @@ var myCanvas;
 var c; // canvas context
 var scaleSelectorComboBox;
 var rootSelectorComboBox;
+var showLeftHandedCheckbox;
+var showOnly1ScaleCheckbox;
 var fretboard;
 const stringPositions = [401, 415, 431, 445, 459, 474];
 const fretPositions = [79, 143, 217, 284, 349, 409, 465, 518, 570, 616, 660, 705, 741, 782, 816, 847, 878, 907, 938, 963, 987, 1012, 1034];
@@ -145,15 +164,91 @@ function Imagery(){
 			c.lineWidth = 2;
 			c.strokeStyle = 'black';
 			c.stroke();
+			
+			// draw the marker text
+			c.font = "bold 20px sans-serif";
+			c.fillStyle = "white";
+			c.textAlign = "center";
+			c.textBaseline = "middle";
+			c.fillText(this.markers[markerIndex].text, this.markers[markerIndex].x, this.markers[markerIndex].y);
+			
+			c.strokeStyle = "white";
+			//c.strokeText(this.markers[markerIndex].text, this.markers[markerIndex].x, this.markers[markerIndex].y);
 		}
 	}
+	
+	
+	// return fret index of matching note, or -1 if note not found
+	this.searchFret = function(octave, note, startingString, startingPosition){
+		let startingFret = (startingString*(this.fretCount+1)) + startingPosition;
+		let currentString = startingString;
+		
+		while(startingFret >= 0){
+			for(var fretIndex = startingFret, endSearchIndex = fretIndex + (currentString == 3 ? 4 : 5);fretIndex<endSearchIndex;fretIndex++){
+				if(this.frets[fretIndex].octave == octave && this.frets[fretIndex].note == note)
+					return fretIndex;
+				else
+					console.log("not a match... searching for " + noteNames[note] + octave + ", and string " + (currentString+1) + " fret " + (fretIndex%(this.fretCount+1)) + " (" + noteNames[this.frets[fretIndex].note] + this.frets[fretIndex].octave + ") was not it.");
+				
+			}
+			
+			// next string upward
+			startingFret -= this.fretCount+1;
+			currentString--;
+		}
+		
+		return -1;
+	}
+	
 	
 	this.markScale = function(scaleNotes){
 		this.markers = [];
 		
-		for(var fretIndex = 0, fretsLen = this.frets.length;fretIndex < fretsLen;fretIndex++){
-			if(scaleNotes.indexOf(this.frets[fretIndex].note) >= 0){
-				this.markers.push(new Marker(markerOctaveColorCode[this.frets[fretIndex].octave], "", this.frets[fretIndex].x, this.frets[fretIndex].y));
+		if(showOnly1ScaleCheckbox.checked){
+			// the root note is the last index of scaleNotes; bring it to index 0
+			scaleNotesReorder = [];
+			scaleNotesReorder.push(scaleNotes[scaleNotes.length-1]);
+			for(var i = 0, len = scaleNotes.length-1;i<len;i++)
+				scaleNotesReorder.push(scaleNotes[i]);
+			scaleNotes = scaleNotesReorder;
+			
+			let currentOctave = scaleNotes[0] < noteIndices['E'] ? 3 : 2;
+			let startingString = 5;
+			let startingFret = 0;
+			
+			console.log("DEBUG: drawing markers for notes: ", scaleNotes, " with starting octave of " + currentOctave + " and starting fret low Open E. There are " + scaleNotes.length + " notes in the scale.");
+			
+			let numberOfNotesInScale = scaleNotes.length;
+			let lastNote = 0;
+			
+			// the fret index is like the hand position: determining the lower bound of fret number which will be searched across the fretboard. the upper bound is startingFret+4 inclusive.
+			for(var noteIndex = 0;noteIndex < numberOfNotesInScale;noteIndex++){
+				if(scaleNotes[noteIndex] < lastNote){ // wrapped past B to C, raise octave
+					currentOctave++;
+				}
+				lastNote = scaleNotes[noteIndex];
+				
+				let fretIndex = this.searchFret(currentOctave, scaleNotes[noteIndex], startingString, startingFret);
+				if(fretIndex == -1){
+					console.log("Fret for " + noteNames[scaleNotes[noteIndex]] + " not found under conditions: ", currentOctave, scaleNotes[noteIndex], startingString, startingFret);
+					break;
+				}
+			
+				this.markers.push(new Marker("Blue", "" + (noteIndex+1), this.frets[fretIndex].x, this.frets[fretIndex].y));
+				
+				// update starting position for next search
+				currentOctave = this.frets[fretIndex].octave;
+				startingString = Math.floor(fretIndex / (this.fretCount+1));
+			}
+			
+		}
+		
+		else{
+			// draw all notes in scale on the entire fretboard
+			for(var fretIndex = 0, fretsLen = this.frets.length;fretIndex < fretsLen;fretIndex++){
+				if(scaleNotes.indexOf(this.frets[fretIndex].note) >= 0){
+					this.markers.push(new Marker(markerOctaveColorCode[this.frets[fretIndex].octave], "", this.frets[fretIndex].x, this.frets[fretIndex].y));
+				}
 			}
 		}
 		
@@ -196,66 +291,42 @@ function Imagery(){
 
 function invokeMarkScale(){
 	let root = rootSelectorComboBox.value;
-	let scale = scaleSelectorComboBox.value;
+	let scaleIndex = scaleSelectorComboBox.value;
 	
-	switch(scale){
-		case "Major":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MAJOR) );
-			break;
-		}
-		case "Natural Minor":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_NATURAL_MINOR) );
-			break;
-		}
-		case "Major Blues":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MAJOR_BLUES) );
-			break;
-		}
-		case "Minor Blues":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MINOR_BLUES) );
-			break;
-		}
-		case "Major Pentatonic":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MAJOR_PENTATONIC) );
-			break;
-		}
-		case "Minor Pentatonic":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MINOR_PENTATONIC) );
-			break;
-		}
-		case "Ionian Mode":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_IONIAN) );
-			break;
-		}
-		case "Dorian Mode":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_DORIAN) );
-			break;
-		}
-		case "Phrygian Mode":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_PHRYGIAN) );
-			break;
-		}
-		case "Lydian Mode":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_LYDIAN) );
-			break;
-		}
-		case "Mixolydian Mode":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_MIXOLYDIAN) );
-			break;
-		}
-		case "Aeolian Mode":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_AEOLIAN) );
-			break;
-		}
-		case "Locrian Mode":{
-			fretboard.markScale( enumerateScale(noteIndices[root], SCALE_STEPS_LOCRIAN) );
-			break;
-		}
-		default:{
-			alert("Error: invalid scale selected");
-			break;
-		}
-	}
+	fretboard.markScale(
+		enumerateScale(
+			noteIndices[root], scales[scaleIndex].steps
+		)
+	);
+}
+
+
+function CustomCheckbox(checkedByDefault, text){
+
+	var cb = document.createElement('div');
+	cb.className = "customCheckbox";
+	cb.checked = checkedByDefault;
+	
+	var span = document.createElement('span');
+	span.innerHTML = text;
+	
+	var subDiv = document.createElement('div');
+	subDiv.innerHTML = cb.checked ? "&#10004;" : " ";
+	cb.childDiv = subDiv;
+	
+	cb.onclick = function(){
+		this.checked = !this.checked;
+		
+		this.childDiv.innerHTML = this.checked ? "&#10004;" : " ";
+	}.bind(cb);
+	
+	cb.appendChild(span);
+	cb.appendChild(subDiv);
+	
+	document.body.appendChild(cb);
+	
+	return cb;
+	
 }
 
 function init(){
@@ -266,12 +337,28 @@ function init(){
 	myCanvas = document.getElementById('ScaleWizardCanvas');
 	c = myCanvas.getContext('2d');
 	
+	// enumerate scaleSelectorComboBox
+	for(var i = 0, len = scales.length;i < len;i++){
+		let option = document.createElement('option');
+		option.innerHTML = scales[i].name;
+		option.value = i;
+		scaleSelectorComboBox.appendChild(option);
+	}
+	
+	scaleSelectorComboBox.selectedIndex = 1;
+	
+	showLeftHandedCheckbox = new CustomCheckbox(false, "Left-Handed");
+	showLeftHandedCheckbox.style.left = "680px";
+	
+	showOnly1ScaleCheckbox = new CustomCheckbox(false, "Single Scale");
+	showOnly1ScaleCheckbox.style.left = "800px";
+	
 	fretboard = new Imagery();
 	console.log("DEBUG: fretboard creation completed");
 	
 	// highlight a Major C scale
 	fretboard.markScale(
-		enumerateScale( noteIndices['C'], SCALE_STEPS_MAJOR
+		enumerateScale( noteIndices['C'], scalesByName['Major'].steps
 	));
 	
 	console.log("DEBUG: C Major scale drawn");
@@ -298,12 +385,6 @@ function init(){
 		<option>B</option>
 	</select>
 	<select id='scaleSelectorComboBox'>
-		<option>Major</option>
-		<option>Natural Minor</option>
-		<option>Major Blues</option>
-		<option>Minor Blues</option>
-		<option>Major Pentatonic</option>
-		<option>Minor Pentatonic</option>
 	</select>
 </div>
 <button class='draw_scale_button' onclick='invokeMarkScale()'>Draw Scale</button>
