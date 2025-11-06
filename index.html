@@ -466,7 +466,9 @@ function init(){
 	showNoteNamesCheckbox = new CustomCheckbox(true, "Name Notes");
 	showNoteNamesCheckbox.style.left = "920px";
 	showNoteNamesCheckbox.additionalFunction = function(){
+	
 		// toggle names automatically when the checkbox is clicked
+		
 		for(var markerIndex = 0, len = fretboard.markers.length;markerIndex < len;markerIndex++){
 			fretboard.markers[markerIndex].text = showNoteNamesCheckbox.checked ? noteNames[fretboard.markers[markerIndex].note] : "";
 		}
