@@ -70,6 +70,17 @@ footer a{
 	border-radius:12px;
 	border:2px solid yellow;
 }
+.fretHitbox{
+	display:block;
+	z-index:1004;
+	text-align:center;
+	color:white;
+	background-color:rgba(17, 171, 242, 100);
+	visibility:hidden;
+}
+.fretHitbox:hover{
+	visibility:visible;
+}
 </style>
 <script src='logic.js'></script>
 <script>
@@ -79,17 +90,36 @@ var scaleSelectorComboBox;
 var rootSelectorComboBox;
 var showLeftHandedCheckbox;
 var showOnly1ScaleCheckbox;
+var showNoteNamesCheckbox;
 var fretboard;
 const stringPositions = [401, 415, 431, 445, 459, 474];
 const fretPositions = [79, 143, 217, 284, 349, 409, 465, 518, 570, 616, 660, 705, 741, 782, 816, 847, 878, 907, 938, 963, 987, 1012, 1034];
 const markerRadius = 11; // pixels max due to fretboard image size constraints
-const markerOctaveColorCode = ['gray', 'black', 'brown', 'yellow', 'green', 'blue', 'red', 'orange']; // note: there is no octave 0
+const markerOctaveColorCode = ['gray', 'black', 'brown', 'purple', 'green', 'blue', 'red', 'orange']; // note: there is no octave 0
+const hitboxWidth = 12;
+const hitboxHeight = 10;
+var currentScale = "";
+var currentNotes = [];
 
-function Marker(color, text, x, y){
+function Marker(color, text, x, y, note){
 	this.color = color;
 	this.text = text;
+	this.note = note;
 	this.x = x;
 	this.y = y;
+}
+
+function Hitbox2D(x, y, w, h){
+	this.x = x;
+	this.y = y;
+	this.w = w;
+	this.h = h;
+	
+	this.isInside = function(x, y){
+		return (x >= this.x && x <= this.x + this.w)
+		&&
+		(y >= this.y && y <= this.y + this.h);
+	}
 }
 
 function Fret(noteIndex, octave, x, y){
@@ -97,6 +127,21 @@ function Fret(noteIndex, octave, x, y){
 	this.octave = octave;
 	this.x = x;
 	this.y = y;
+	
+	this.hitbox = new Hitbox2D(x - hitboxWidth/2, y - hitboxHeight/2, hitboxWidth, hitboxHeight);
+	/* DEBUG
+	this.hitboxDiv = document.createElement('div');
+	this.hitboxDiv.className = "fretHitbox";
+	this.hitboxDiv.style.position = "absolute";
+	this.hitboxDiv.style.left = this.hitbox.x + "px";
+	this.hitboxDiv.style.top = this.hitbox.y + "px";
+	this.hitboxDiv.style.width = this.hitbox.w;
+	this.hitboxDiv.style.height = this.hitbox.h;
+	//this.hitboxDiv.style.visibility = "visible";
+	this.hitboxDiv.innerHTML = noteNames[noteIndex];
+	document.body.appendChild(this.hitboxDiv);
+	console.log("New hitbox: ", this.hitboxDiv);
+	*/
 }
 
 // main wrapper for all visual elements
@@ -140,6 +185,12 @@ function Imagery(){
 		}
 	}
 	
+	// higher hitbox for the entire fretboard
+	this.fretboardHitbox = new Hitbox2D(this.frets[0].hitbox.x,
+	this.frets[0].hitbox.y,
+	this.frets[this.frets.length-1].hitbox.x - this.frets[0].hitbox.x + hitboxWidth,
+	this.frets[this.frets.length-1].hitbox.y - this.frets[0].hitbox.y + hitboxHeight);
+	
 	
 	this.markers = []; // frets to be 'highlighted' via marker overlays
 	
@@ -172,9 +223,36 @@ function Imagery(){
 			c.textBaseline = "middle";
 			c.fillText(this.markers[markerIndex].text, this.markers[markerIndex].x, this.markers[markerIndex].y);
 			
-			c.strokeStyle = "white";
+			//c.strokeStyle = "white";
 			//c.strokeText(this.markers[markerIndex].text, this.markers[markerIndex].x, this.markers[markerIndex].y);
+			
 		}
+		
+		/*
+		c.fillStyle = "pink";
+		c.fillRect(this.fretboardHitbox.x,
+			this.fretboardHitbox.y,
+			this.fretboardHitbox.w,
+			this.fretboardHitbox.h);
+		
+		// fret-hover hitbox & note name
+		for(var fretIndex=0, len = this.frets.length;fretIndex < len;fretIndex++){
+			c.fillStyle = "green";
+			c.fillRect(this.frets[fretIndex].hitbox.x,
+				this.frets[fretIndex].hitbox.y,
+				this.frets[fretIndex].hitbox.w,
+				this.frets[fretIndex].hitbox.h);
+		}
+		*/
+		
+		// draw current scale/selection information
+		c.font = "bold 40px sans-serif";
+		c.fillStyle = "white";
+		c.textAlign = "left";
+		c.textBaseline = "middle";
+		c.fillText(currentScale + " " + nameNoteArray(currentNotes), 100, 100);
+		c.strokeStyle = "limegreen";
+		c.strokeText(currentScale + " " + nameNoteArray(currentNotes), 100, 100);
 	}
 	
 	
@@ -204,13 +282,16 @@ function Imagery(){
 	this.markScale = function(scaleNotes){
 		this.markers = [];
 		
+		// the root note is the last index of scaleNotes; bring it to index 0
+		scaleNotesReorder = [];
+		scaleNotesReorder.push(scaleNotes[scaleNotes.length-1]);
+		for(var i = 0, len = scaleNotes.length-1;i<len;i++)
+			scaleNotesReorder.push(scaleNotes[i]);
+		scaleNotes = scaleNotesReorder;
+		
+		currentNotes = scaleNotes;
+		
 		if(showOnly1ScaleCheckbox.checked){
-			// the root note is the last index of scaleNotes; bring it to index 0
-			scaleNotesReorder = [];
-			scaleNotesReorder.push(scaleNotes[scaleNotes.length-1]);
-			for(var i = 0, len = scaleNotes.length-1;i<len;i++)
-				scaleNotesReorder.push(scaleNotes[i]);
-			scaleNotes = scaleNotesReorder;
 			
 			let currentOctave = scaleNotes[0] < noteIndices['E'] ? 3 : 2;
 			let startingString = 5;
@@ -234,7 +315,7 @@ function Imagery(){
 					break;
 				}
 			
-				this.markers.push(new Marker("Blue", "" + (noteIndex+1), this.frets[fretIndex].x, this.frets[fretIndex].y));
+				this.markers.push(new Marker("Blue", "" + (noteIndex+1), this.frets[fretIndex].x, this.frets[fretIndex].y), this.frets[fretIndex].note);
 				
 				// update starting position for next search
 				currentOctave = this.frets[fretIndex].octave;
@@ -247,7 +328,7 @@ function Imagery(){
 			// draw all notes in scale on the entire fretboard
 			for(var fretIndex = 0, fretsLen = this.frets.length;fretIndex < fretsLen;fretIndex++){
 				if(scaleNotes.indexOf(this.frets[fretIndex].note) >= 0){
-					this.markers.push(new Marker(markerOctaveColorCode[this.frets[fretIndex].octave], "", this.frets[fretIndex].x, this.frets[fretIndex].y));
+					this.markers.push(new Marker(markerOctaveColorCode[this.frets[fretIndex].octave], showNoteNamesCheckbox.checked ? noteNames[this.frets[fretIndex].note] : "", this.frets[fretIndex].x, this.frets[fretIndex].y, this.frets[fretIndex].note));
 				}
 			}
 		}
@@ -256,7 +337,10 @@ function Imagery(){
 	}
 	
 	this.addUserMarker = function(fretIndex){
-		this.markers.push(new Marker(markerOctaveColorCode[this.frets[fretIndex].octave], "", this.frets[fretIndex].x, this.frets[fretIndex].y));
+		// SUGGESTION! soft deactivation of any enumerated scale as the 'current scale'. should also remove all but 1 unique note marker if current scale is not User-Specified Notes
+		currentScale = "User-Specified Notes";
+	
+		this.markers.push(new Marker(markerOctaveColorCode[this.frets[fretIndex].octave], "", this.frets[fretIndex].x, this.frets[fretIndex].y, this.frets[fretIndex].note));
 		
 		this.draw();
 	}
@@ -293,6 +377,8 @@ function invokeMarkScale(){
 	let root = rootSelectorComboBox.value;
 	let scaleIndex = scaleSelectorComboBox.value;
 	
+	currentScale = root + " " + scales[scaleIndex].name;
+	
 	fretboard.markScale(
 		enumerateScale(
 			noteIndices[root], scales[scaleIndex].steps
@@ -314,10 +400,14 @@ function CustomCheckbox(checkedByDefault, text){
 	subDiv.innerHTML = cb.checked ? "&#10004;" : " ";
 	cb.childDiv = subDiv;
 	
+	cb.additionalFunction = function(){}
+	
 	cb.onclick = function(){
 		this.checked = !this.checked;
 		
 		this.childDiv.innerHTML = this.checked ? "&#10004;" : " ";
+		
+		this.additionalFunction();
 	}.bind(cb);
 	
 	cb.appendChild(span);
@@ -327,6 +417,26 @@ function CustomCheckbox(checkedByDefault, text){
 	
 	return cb;
 	
+}
+
+// input [0,2,3] => output "[C, D, D#]"
+function nameNoteArray(noteArray){
+	let out = "[";
+	
+	if(noteArray.length == 0){
+		out += "(empty)";
+		
+	}else{
+		out += noteNames[noteArray[0]];
+		
+		for(var i = 1, len = noteArray.length;i < len;i++)
+			out += ", " + noteNames[noteArray[i]];
+			
+	}
+	
+	out += "]";
+	
+	return out;
 }
 
 function init(){
@@ -353,8 +463,21 @@ function init(){
 	showOnly1ScaleCheckbox = new CustomCheckbox(false, "Single Scale");
 	showOnly1ScaleCheckbox.style.left = "800px";
 	
+	showNoteNamesCheckbox = new CustomCheckbox(true, "Name Notes");
+	showNoteNamesCheckbox.style.left = "920px";
+	showNoteNamesCheckbox.additionalFunction = function(){
+		// toggle names automatically when the checkbox is clicked
+		for(var markerIndex = 0, len = fretboard.markers.length;markerIndex < len;markerIndex++){
+			fretboard.markers[markerIndex].text = showNoteNamesCheckbox.checked ? noteNames[fretboard.markers[markerIndex].note] : "";
+		}
+		
+		fretboard.draw();
+	};
+	
 	fretboard = new Imagery();
 	console.log("DEBUG: fretboard creation completed");
+	
+	currentScale = "C Major";
 	
 	// highlight a Major C scale
 	fretboard.markScale(
