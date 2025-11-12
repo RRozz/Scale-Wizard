@@ -166,6 +166,7 @@ function Imagery(){
 	this.strings = 6;
 	this.stringTuning = [noteIndices['E'], noteIndices['B'], noteIndices['G'], noteIndices['D'], noteIndices['A'], noteIndices['E']];
 	this.stringOctaves = [4, 3, 3, 3, 2, 2];
+	this.inlayFrets = [3, 5, 7, 9, 12, 15, 17, 19, 21]; // a marker is shown above these fret indices
 	this.frets = [];
 	
 	// high e = 0, low E = 5
@@ -244,6 +245,36 @@ function Imagery(){
 				this.frets[fretIndex].hitbox.h);
 		}
 		*/
+		
+		
+		
+		// draw the fret inlay markers
+		for(inlayIndex = 0, inlayCount = this.inlayFrets.length;inlayIndex < inlayCount;inlayIndex++){
+			// background rectangle
+			let rectangle = new Hitbox2D(this.frets[this.inlayFrets[inlayIndex]].x - 16, this.frets[this.inlayFrets[inlayIndex]].y - 16 - 50, 32, 32);
+			let gradient = c.createLinearGradient(rectangle.x, rectangle.y, rectangle.x + rectangle.w, rectangle.x);
+			gradient.addColorStop(0, "#2A2D3C");
+			gradient.addColorStop(0.25, "#414A59");
+			gradient.addColorStop(0.5, "#4D9BA5");
+			gradient.addColorStop(1, "#45D2CC");
+			c.fillStyle = gradient;
+			c.fillRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
+			
+			// add triangle under rectangle to create point/arrow
+			c.beginPath();
+			c.moveTo(rectangle.x, rectangle.y + rectangle.h);
+			c.lineTo(rectangle.x + rectangle.w, rectangle.y + rectangle.h);
+			c.lineTo(rectangle.x + Math.round(rectangle.w / 2), rectangle.y + rectangle.h + 16);
+			c.closePath();
+			c.fill();
+			
+			
+			// text
+			c.fillStyle = "white";
+			c.fillText(""+this.inlayFrets[inlayIndex], this.frets[this.inlayFrets[inlayIndex]].x, this.frets[this.inlayFrets[inlayIndex]].y - 50);
+		}
+		
+		
 		
 		// draw current scale/selection information
 		c.font = "bold 40px sans-serif";
