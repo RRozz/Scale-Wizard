@@ -251,12 +251,26 @@ function Imagery(){
 		// draw the fret inlay markers
 		for(inlayIndex = 0, inlayCount = this.inlayFrets.length;inlayIndex < inlayCount;inlayIndex++){
 			// background rectangle
-			let rectangle = new Hitbox2D(this.frets[this.inlayFrets[inlayIndex]].x - 16, this.frets[this.inlayFrets[inlayIndex]].y - 16 - 50, 32, 32);
-			let gradient = c.createLinearGradient(rectangle.x, rectangle.y, rectangle.x + rectangle.w, rectangle.x);
+			let rectangle = new Hitbox2D(this.frets[this.inlayFrets[inlayIndex]].x - 16, this.frets[0].y - 16 - 50, 32, 32);
+			/*
+			let gradient = c.createLinearGradient(rectangle.x, rectangle.y, rectangle.x + rectangle.w, rectangle.y);
+			gradient.addColorStop(0, "#2A2D3C");
+			gradient.addColorStop(0.75, "#414A59");
+			gradient.addColorStop(0.9, "#4D9BA5");
+			gradient.addColorStop(1, "#45D2CC");
+			*/
+			
+			// switch to Radial Gradient
+			let centerX = rectangle.x;
+			let centerY = rectangle.y;
+			let radius = rectangle.w;
+			let gradient = c.createRadialGradient(centerX, centerY, radius, centerX, centerY, radius*2);
 			gradient.addColorStop(0, "#2A2D3C");
 			gradient.addColorStop(0.25, "#414A59");
 			gradient.addColorStop(0.5, "#4D9BA5");
-			gradient.addColorStop(1, "#45D2CC");
+			gradient.addColorStop(0.1, "#45D2CC");
+	
+	
 			c.fillStyle = gradient;
 			c.fillRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
 			
@@ -272,6 +286,22 @@ function Imagery(){
 			// text
 			c.fillStyle = "white";
 			c.fillText(""+this.inlayFrets[inlayIndex], this.frets[this.inlayFrets[inlayIndex]].x, this.frets[this.inlayFrets[inlayIndex]].y - 50);
+			
+			
+			// and draw a circle inlay UNDER the fretboard
+			c.beginPath();
+			c.arc(this.frets[this.inlayFrets[inlayIndex]].x, this.frets[this.frets.length-1].y + 20 + (inlayIndex), Math.floor(markerRadius * 0.5), 0, 2 * Math.PI);
+			
+			// fill with color
+			c.fillStyle = "white";
+			c.fill();
+			
+			// double dot it for the 12th fret
+			if(this.inlayFrets[inlayIndex] == 12){
+				c.beginPath();
+				c.arc(this.frets[this.inlayFrets[inlayIndex]].x, this.frets[this.frets.length-1].y + 40 + (inlayIndex), Math.floor(markerRadius * 0.5), 0, 2 * Math.PI);
+				c.fill();
+			}
 		}
 		
 		
