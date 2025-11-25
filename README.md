@@ -24,6 +24,7 @@ A guitar fretboard tool to visualize scales and identify scales from selected no
 - Reverse scale finder
 - Improve note alignment
 - Isolate contiguous steps within a scale and allow user to play an emulated piano/guitar with the isolated notes
+- Improve appearance on mobile devices and various screen sizes
 
 ## Known Issues
  - The markers on the string are misaligned with the fretboard image
