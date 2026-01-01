@@ -92,6 +92,7 @@ var showLeftHandedCheckbox;
 var showOnly1ScaleCheckbox;
 var showNoteNamesCheckbox;
 var scalePlayer = undefined;
+var pianoKeyboard;
 var fretboard;
 const stringPositions = [401, 415, 431, 445, 459, 474];
 const fretPositions = [79, 143, 217, 284, 349, 409, 465, 518, 570, 616, 660, 705, 741, 782, 816, 847, 878, 907, 938, 963, 987, 1012, 1034];
@@ -534,6 +535,7 @@ function init(){
 		}
 		
 		scalePlayer.setEnabled(this.checked);
+		pianoKeyboard.container.style.display = this.checked ? "block" : "none";
 		console.log("scale player object: ", scalePlayer);
 	}
 	
@@ -553,8 +555,19 @@ function init(){
 		fretboard.draw();
 	};
 	
+	pianoKeyboard = new PianoKeyboard({
+		x: 860,
+		y: 94,
+		width: 577,
+		height: 178
+	});
+	
 	fretboard = new Imagery();
 	console.log("DEBUG: fretboard creation completed");
+	
+	// add responsiveness to drop down boxes
+	rootSelectorComboBox.onchange = invokeMarkScale;
+	scaleSelectorComboBox.onchange = invokeMarkScale;
 	
 	currentScale = "C Major";
 	
@@ -717,11 +730,18 @@ class ScalePlayer {
         
         const note = this.createNote(frequency);
         this.activeNotes.set(noteId, note);
+		
+		console.log("keyIndex ", keyIndex);
+		console.log("playing frequency ", frequency);
+		pianoKeyboard.updateNote(frequency, true); // update the keyboard visual
     }
     
     stopNote(keyIndex) {
         const noteId = `note_${keyIndex}`;
         const note = this.activeNotes.get(noteId);
+		
+        const scale = this.getCurrentScale();
+		pianoKeyboard.updateNote(scale[keyIndex], false); // update the keyboard visual
         
         if (!note) return;
         
@@ -808,6 +828,310 @@ class ScalePlayer {
 
 
 
+
+// modular piano keyboard visual for which notes are playing currently via synth
+class PianoKeyboard {
+    constructor(options = {}) {
+        this.x = options.x || 860;
+        this.y = options.y || 94;
+        this.width = options.width || 577;
+        this.height = options.height || 178;
+        
+        // Base frequencies for one octave starting at C2
+        this.baseFrequencies = {
+            'C': 65.41, 'C#': 69.30, 'D': 73.42, 'D#': 77.78,
+            'E': 82.41, 'F': 87.31, 'F#': 92.50, 'G': 98.00,
+            'G#': 103.83, 'A': 110.00, 'A#': 116.54, 'B': 123.47
+        };
+        
+        // Map to store frequency -> note name for quick lookup
+        this.freqToNote = {};
+        this.buildFrequencyMap();
+        
+        // Track active notes
+        this.activeNotes = new Set();
+        
+        this.container = null;
+        this.keys = {};
+        
+        this.init();
+    }
+    
+    buildFrequencyMap() {
+        // Match the synth's frequency calculation exactly
+        // Synth uses: rootFreq * Math.pow(2, octave + interval/12)
+        // For C at different octaves with interval=0:
+        // Octave 0: 65.41 * 2^(0+0/12) = 65.41
+        // Octave 1: 65.41 * 2^(1+0/12) = 130.82
+        // etc.
+        
+        const noteOrder = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const cFreq = this.baseFrequencies['C']; // 65.41 (C at octave 0)
+        
+        for (let octave = 0; octave <= 8; octave++) {
+            for (let semitone = 0; semitone < 12; semitone++) {
+                const note = noteOrder[semitone];
+                // Use C as root and calculate each note's frequency
+                const freq = cFreq * Math.pow(2, octave + semitone / 12);
+                this.freqToNote[freq.toFixed(1)] = note;
+            }
+        }
+    }
+    
+    init() {
+        // Create container
+        this.container = document.createElement('div');
+        this.container.className = 'piano-keyboard-container';
+        this.container.style.cssText = `
+            position: absolute;
+            left: ${this.x}px;
+            top: ${this.y}px;
+            width: ${this.width}px;
+            height: ${this.height}px;
+        `;
+        
+        // Add styles
+        this.addStyles();
+        
+        // Create keyboard layout
+        this.createKeys();
+        
+        document.body.appendChild(this.container);
+		
+		this.container.style.display = "none"; // hide unless synth is in use
+    }
+    
+    addStyles() {
+        if (document.getElementById('piano-keyboard-styles')) return;
+        
+        const style = document.createElement('style');
+        style.id = 'piano-keyboard-styles';
+        style.textContent = `
+            .piano-keyboard-container {
+                font-family: Arial, sans-serif;
+                user-select: none;
+            }
+            
+            .piano-keys {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                background: #1a1a1a;
+                border: 2px solid #333;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            }
+            
+            .piano-key {
+                position: absolute;
+                border: 1px solid #000;
+                cursor: pointer;
+                transition: all 0.05s ease;
+            }
+            
+            .piano-key.white {
+                background: linear-gradient(to bottom, #fff 0%, #f5f5f5 100%);
+                border-radius: 0 0 4px 4px;
+                box-shadow: inset 0 -2px 4px rgba(0,0,0,0.1);
+            }
+            
+            .piano-key.white:hover {
+                background: linear-gradient(to bottom, #f0f0f0 0%, #e5e5e5 100%);
+            }
+            
+            .piano-key.white.active {
+                background: linear-gradient(to bottom, #4a9eff 0%, #2d7fd6 100%);
+                box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+            }
+            
+            .piano-key.black {
+                background: linear-gradient(to bottom, #2a2a2a 0%, #000 100%);
+                border-radius: 0 0 3px 3px;
+                z-index: 2;
+            }
+            
+            .piano-key.black:hover {
+                background: linear-gradient(to bottom, #3a3a3a 0%, #1a1a1a 100%);
+            }
+            
+            .piano-key.black.active {
+                background: linear-gradient(to bottom, #5ab3ff 0%, #3d8fd9 100%);
+            }
+            
+            .key-label {
+                position: absolute;
+                bottom: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 12px;
+                font-weight: bold;
+                pointer-events: none;
+            }
+            
+            .piano-key.white .key-label {
+                color: #333;
+            }
+            
+            .piano-key.white.active .key-label {
+                color: #fff;
+            }
+            
+            .piano-key.black .key-label {
+                color: #aaa;
+                font-size: 10px;
+            }
+            
+            .piano-key.black.active .key-label {
+                color: #fff;
+            }
+        `;
+        
+        document.head.appendChild(style);
+    }
+    
+    createKeys() {
+        const keysContainer = document.createElement('div');
+        keysContainer.className = 'piano-keys';
+        
+        const whiteKeyWidth = this.width / 7; // 7 white keys per octave (C D E F G A B)
+        const blackKeyWidth = whiteKeyWidth * 0.6;
+        const blackKeyHeight = this.height * 0.6;
+        
+        const layout = [
+            { note: 'C', type: 'white', pos: 0 },
+            { note: 'C#', type: 'black', pos: 0.7 },
+            { note: 'D', type: 'white', pos: 1 },
+            { note: 'D#', type: 'black', pos: 1.75 },
+            { note: 'E', type: 'white', pos: 2 },
+            { note: 'F', type: 'white', pos: 3 },
+            { note: 'F#', type: 'black', pos: 3.7 },
+            { note: 'G', type: 'white', pos: 4 },
+            { note: 'G#', type: 'black', pos: 4.75 },
+            { note: 'A', type: 'white', pos: 5 },
+            { note: 'A#', type: 'black', pos: 5.75 },
+            { note: 'B', type: 'white', pos: 6 }
+        ];
+        
+        layout.forEach(({ note, type, pos }) => {
+            const key = document.createElement('div');
+            key.className = `piano-key ${type}`;
+            key.dataset.note = note;
+            
+            if (type === 'white') {
+                key.style.left = `${pos * whiteKeyWidth}px`;
+                key.style.width = `${whiteKeyWidth}px`;
+                key.style.height = '100%';
+                key.style.top = '0';
+            } else {
+                key.style.left = `${pos * whiteKeyWidth}px`;
+                key.style.width = `${blackKeyWidth}px`;
+                key.style.height = `${blackKeyHeight}px`;
+                key.style.top = '0';
+            }
+            
+            const label = document.createElement('div');
+            label.className = 'key-label';
+            label.textContent = note;
+            key.appendChild(label);
+            
+            keysContainer.appendChild(key);
+            this.keys[note] = key;
+        });
+        
+        this.container.appendChild(keysContainer);
+    }
+    
+    // Main function to call when a note is pressed or released
+    updateNote(frequency, isPressed) {
+        const note = this.getNoteFromFrequency(frequency);
+        if (!note) return;
+        
+        if (isPressed) {
+            this.pressNote(note);
+        } else {
+            this.releaseNote(note);
+        }
+    }
+    
+    getNoteFromFrequency(frequency) {
+        // Round to 2 decimal places to match our map
+        const roundedFreq = frequency.toFixed(1);
+		console.log("Freq->Note: ", frequency, " :: ", roundedFreq, " -> ", this.freqToNote[roundedFreq]);
+        return this.freqToNote[roundedFreq];
+    }
+    
+    pressNote(note) {
+        if (!this.keys[note]) return;
+        this.keys[note].classList.add('active');
+        this.activeNotes.add(note);
+    }
+    
+    releaseNote(note) {
+        if (!this.keys[note]) return;
+        this.keys[note].classList.remove('active');
+        this.activeNotes.delete(note);
+    }
+    
+    // Utility: Release all notes
+    releaseAll() {
+        this.activeNotes.forEach(note => {
+            this.keys[note].classList.remove('active');
+        });
+        this.activeNotes.clear();
+    }
+    
+    // Utility: Get currently active notes
+    getActiveNotes() {
+        return Array.from(this.activeNotes);
+    }
+    
+    // Change position/size after creation
+    resize(x, y, width, height) {
+        if (x !== undefined) this.x = x;
+        if (y !== undefined) this.y = y;
+        if (width !== undefined) this.width = width;
+        if (height !== undefined) this.height = height;
+        
+        this.container.style.left = `${this.x}px`;
+        this.container.style.top = `${this.y}px`;
+        this.container.style.width = `${this.width}px`;
+        this.container.style.height = `${this.height}px`;
+        
+        // Recreate keys with new dimensions
+        this.container.innerHTML = '';
+        this.keys = {};
+        this.createKeys();
+    }
+    
+    // Remove keyboard from DOM
+    destroy() {
+        if (this.container && this.container.parentNode) {
+            this.container.parentNode.removeChild(this.container);
+        }
+    }
+}
+
+// Usage example:
+/*
+const keyboard = new PianoKeyboard({
+    x: 860,
+    y: 94,
+    width: 577,
+    height: 178
+});
+
+// When a key is pressed:
+keyboard.updateNote(261.63, true);  // Press middle C
+
+// When a key is released:
+keyboard.updateNote(261.63, false); // Release middle C
+
+// To resize later:
+keyboard.resize(100, 100, 400, 120);
+
+// To clean up:
+keyboard.destroy();
+*/
 
 </script>
 </head>
