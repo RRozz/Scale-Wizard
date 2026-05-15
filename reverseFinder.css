@@ -1,0 +1,478 @@
+
+/* ── Google Fonts ────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Share+Tech+Mono&display=swap');
+
+/* ── Design Tokens ───────────────────────── */
+:root {
+  --rf-bg:           #0e0c08;
+  --rf-panel:        #161208;
+  --rf-border:       #5a3e12;
+  --rf-border-hi:    #c8960a;
+  --rf-gold:         #d4af6a;
+  --rf-gold-dim:     #8b6914;
+  --rf-gold-bright:  #f0d080;
+  --rf-amber:        #c8960a;
+  --rf-wood:         #2a1a06;
+  --rf-wood-mid:     #3d2a0a;
+  --rf-string:       #b8a060;
+  --rf-fret:         #8b7030;
+  --rf-nut:          #e8d8a0;
+  --rf-selected-bg:  #4a2800;
+  --rf-selected:     #ffcc44;
+  --rf-marker:       rgba(212,175,106,0.18);
+  --rf-shadow:       0 8px 48px rgba(0,0,0,0.9), 0 0 0 1px #3d2a0a;
+  --rf-font-head:    'Cinzel', serif;
+  --rf-font-mono:    'Share Tech Mono', 'Courier New', monospace;
+  --rf-radius:       4px;
+}
+
+/* ── Overlay backdrop ────────────────────── */
+#rfBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(2px);
+  z-index: 1999;
+  transition: opacity 0.25s;
+}
+
+/* ── Main panel ──────────────────────────── */
+#rfPanel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(860px, 96vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--rf-panel);
+  border: 1px solid var(--rf-border);
+  border-top: 3px solid var(--rf-amber);
+  box-shadow: var(--rf-shadow);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.25s, transform 0.25s;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rf-border) transparent;
+}
+
+/* ── Header ──────────────────────────────── */
+#rfHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--rf-border);
+  background: linear-gradient(180deg, #1e1508 0%, var(--rf-panel) 100%);
+  flex-shrink: 0;
+}
+#rfTitle {
+  font-family: var(--rf-font-head);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--rf-gold-bright);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#rfTitle::before {
+  content: '⬡';
+  font-size: 18px;
+  color: var(--rf-amber);
+  animation: rfPulse 3s ease-in-out infinite;
+}
+@keyframes rfPulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+#rfCloseBtn {
+  background: none;
+  border: 1px solid var(--rf-border);
+  color: var(--rf-gold-dim);
+  width: 28px; height: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  border-radius: var(--rf-radius);
+  font-family: var(--rf-font-mono);
+}
+#rfCloseBtn:hover {
+  border-color: var(--rf-gold-bright);
+  color: var(--rf-gold-bright);
+  background: rgba(212,175,106,0.08);
+}
+
+/* ── Instruction line ────────────────────── */
+#rfInstruction {
+  padding: 9px 20px;
+  font-family: var(--rf-font-mono);
+  font-size: 11px;
+  color: var(--rf-gold-dim);
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid rgba(90,62,18,0.4);
+  background: rgba(0,0,0,0.2);
+  flex-shrink: 0;
+}
+
+/* ── Fretboard wrapper ───────────────────── */
+#rfFretboardWrap {
+  padding: 20px 20px 14px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rf-border) transparent;
+}
+
+/* ── Fretboard SVG / table ───────────────── */
+#rfFretboard {
+  display: grid;
+  /* 14 cols: label + frets 0-12 */
+  grid-template-columns: 36px repeat(13, 1fr);
+  min-width: 560px;
+  position: relative;
+}
+
+.rf-fret-num {
+  font-family: var(--rf-font-mono);
+  font-size: 10px;
+  color: var(--rf-gold-dim);
+  text-align: center;
+  padding: 0 0 6px;
+  letter-spacing: 0;
+  user-select: none;
+}
+.rf-fret-num.rf-nut-label { color: var(--rf-nut); }
+.rf-fret-num.rf-marker-label {
+  color: var(--rf-amber);
+  font-weight: bold;
+}
+
+.rf-string-label {
+  font-family: var(--rf-font-mono);
+  font-size: 11px;
+  color: var(--rf-string);
+  text-align: right;
+  padding-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 36px;
+  user-select: none;
+  letter-spacing: 0.05em;
+}
+
+.rf-cell {
+  position: relative;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+/* Fret wire (vertical line after each cell, skip nut) */
+.rf-cell::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 4px; bottom: 4px;
+  width: 1px;
+  background: var(--rf-fret);
+  pointer-events: none;
+}
+.rf-cell.rf-nut-cell::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--rf-nut);
+  pointer-events: none;
+}
+.rf-cell.rf-nut-cell { padding-left: 3px; }
+
+/* String line (horizontal) */
+.rf-cell::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%; height: 1px;
+  background: var(--rf-string);
+  pointer-events: none;
+  opacity: 0.5;
+}
+.rf-cell.rf-nut-cell::before { display: none; }
+
+/* Dot on the fret */
+.rf-dot {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(212,175,106,0.25);
+  background: rgba(255,255,255,0.03);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--rf-font-mono);
+  font-size: 9px;
+  color: transparent;
+  transition: all 0.12s;
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0;
+}
+
+.rf-cell:hover .rf-dot {
+  border-color: var(--rf-amber);
+  background: rgba(200,150,10,0.15);
+  color: var(--rf-gold-dim);
+}
+
+.rf-cell.rf-selected .rf-dot {
+  background: var(--rf-selected-bg);
+  border-color: var(--rf-selected);
+  color: var(--rf-selected);
+  box-shadow: 0 0 8px rgba(255,204,68,0.4);
+}
+
+/* Fret position markers (dots on board) */
+.rf-marker-row {
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rf-inlay {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--rf-marker);
+  border: 1px solid rgba(212,175,106,0.3);
+}
+
+/* ── Selected notes bar ──────────────────── */
+#rfNotesBar {
+  padding: 10px 20px;
+  border-top: 1px solid rgba(90,62,18,0.4);
+  border-bottom: 1px solid rgba(90,62,18,0.4);
+  background: rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+#rfNotesLabel {
+  font-family: var(--rf-font-mono);
+  font-size: 10px;
+  color: var(--rf-gold-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#rfNotePills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex: 1;
+}
+.rf-pill {
+  background: rgba(74,40,0,0.6);
+  border: 1px solid var(--rf-amber);
+  color: var(--rf-selected);
+  font-family: var(--rf-font-mono);
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 2px;
+  letter-spacing: 0.08em;
+  animation: rfPillIn 0.15s ease-out;
+}
+@keyframes rfPillIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+#rfNoneLabel {
+  font-family: var(--rf-font-mono);
+  font-size: 11px;
+  color: rgba(139,105,20,0.5);
+  font-style: italic;
+}
+
+/* ── Controls bar ────────────────────────── */
+#rfControls {
+  padding: 12px 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.rf-btn {
+  font-family: var(--rf-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: var(--rf-radius);
+  position: relative;
+  overflow: hidden;
+}
+.rf-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.rf-btn:hover::after { opacity: 0.08; }
+.rf-btn:active::after { opacity: 0.15; }
+
+.rf-btn-search {
+  background: #3d1f00;
+  border-color: var(--rf-amber);
+  color: var(--rf-gold-bright);
+}
+.rf-btn-search:hover {
+  background: #5a2e00;
+  box-shadow: 0 0 12px rgba(200,150,10,0.3);
+}
+.rf-btn-search:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.rf-btn-clear {
+  background: transparent;
+  border-color: var(--rf-border);
+  color: var(--rf-gold-dim);
+}
+.rf-btn-clear:hover { border-color: var(--rf-gold-dim); }
+
+.rf-count-badge {
+  font-family: var(--rf-font-mono);
+  font-size: 11px;
+  color: var(--rf-gold-dim);
+  margin-left: auto;
+  letter-spacing: 0.05em;
+}
+
+/* ── Results ─────────────────────────────── */
+#rfResults {
+  flex: 1;
+  border-top: 1px solid rgba(90,62,18,0.5);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rf-border) transparent;
+}
+#rfResultsHeader {
+  padding: 10px 20px 8px;
+  font-family: var(--rf-font-head);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--rf-gold-dim);
+  border-bottom: 1px solid rgba(90,62,18,0.3);
+  background: rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#rfResultsHeader span {
+  background: var(--rf-wood-mid);
+  border: 1px solid var(--rf-border);
+  color: var(--rf-amber);
+  font-size: 10px;
+  padding: 1px 8px;
+  border-radius: 2px;
+  font-family: var(--rf-font-mono);
+}
+#rfResultsList {
+  list-style: none;
+  margin: 0; padding: 0;
+}
+.rf-result-item {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(90,62,18,0.2);
+  cursor: pointer;
+  transition: background 0.12s;
+  animation: rfItemIn 0.2s ease-out both;
+}
+.rf-result-item:hover {
+  background: rgba(212,175,106,0.06);
+}
+@keyframes rfItemIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.rf-result-item .rf-result-root {
+  font-family: var(--rf-font-head);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--rf-gold-bright);
+  width: 36px;
+  flex-shrink: 0;
+  padding: 12px 0;
+}
+.rf-result-item .rf-result-name {
+  font-family: var(--rf-font-mono);
+  font-size: 12px;
+  color: var(--rf-gold);
+  letter-spacing: 0.08em;
+  flex: 1;
+  padding: 12px 0 12px 10px;
+}
+.rf-result-arrow {
+  color: var(--rf-gold-dim);
+  font-size: 14px;
+  transition: transform 0.12s, color 0.12s;
+}
+.rf-result-item:hover .rf-result-arrow {
+  transform: translateX(4px);
+  color: var(--rf-amber);
+}
+.rf-no-match {
+  padding: 24px 20px;
+  font-family: var(--rf-font-mono);
+  font-size: 12px;
+  color: rgba(139,105,20,0.6);
+  text-align: center;
+  letter-spacing: 0.1em;
+}
+#rfResultsPlaceholder {
+  padding: 30px 20px;
+  text-align: center;
+  font-family: var(--rf-font-mono);
+  font-size: 11px;
+  color: rgba(139,105,20,0.4);
+  letter-spacing: 0.08em;
+  line-height: 1.8;
+}
+
+/* ── Footer ──────────────────────────────── */
+#rfFooter {
+  padding: 8px 20px;
+  font-family: var(--rf-font-mono);
+  font-size: 10px;
+  color: rgba(139,105,20,0.4);
+  letter-spacing: 0.08em;
+  border-top: 1px solid rgba(90,62,18,0.3);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Scrollbars ──────────────────────────── */
+#rfPanel::-webkit-scrollbar,
+#rfFretboardWrap::-webkit-scrollbar,
+#rfResults::-webkit-scrollbar { width: 4px; height: 4px; }
+#rfPanel::-webkit-scrollbar-track,
+#rfFretboardWrap::-webkit-scrollbar-track,
+#rfResults::-webkit-scrollbar-track { background: transparent; }
+#rfPanel::-webkit-scrollbar-thumb,
+#rfFretboardWrap::-webkit-scrollbar-thumb,
+#rfResults::-webkit-scrollbar-thumb { background: var(--rf-border); border-radius: 2px; }

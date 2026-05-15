@@ -82,6 +82,7 @@ footer a{
 	visibility:visible;
 }
 </style>
+<link rel='stylesheet' href='reverseFinder.css'>
 <script src='logic.js'></script>
 <script>
 var myCanvas;
@@ -1133,7 +1134,32 @@ keyboard.resize(100, 100, 400, 120);
 keyboard.destroy();
 */
 
+
+// helper for reverse finder
+function selectScaleByName(scaleName){
+	// split into root note and scale type
+	let delimiterIndex = scaleName.indexOf(" ");
+	let rootNoteName = scaleName.substr(0, delimiterIndex);
+	let scaleType = scaleName.substr(delimiterIndex + 1);
+	
+	for(var xint = 0;xint < 12;xint++){
+		if(rootSelectorComboBox.children[xint].innerText == rootNoteName){
+			rootSelectorComboBox.selectedIndex = xint;
+			break;
+		}
+	}
+	
+	for(var xint = 0, len = scaleSelectorComboBox.children.length;xint < len;xint++){
+		if(scaleSelectorComboBox.children[xint].innerText == scaleType){
+			scaleSelectorComboBox.selectedIndex = xint;
+			break;
+		}
+	}
+	
+	invokeMarkScale();
+}
 </script>
+<script src='reverseFinder.js'></script>
 </head>
 <body onload='init()'>
 <canvas id='ScaleWizardCanvas' width='1184' height='864'></canvas>
@@ -1155,8 +1181,9 @@ keyboard.destroy();
 	<select id='scaleSelectorComboBox'>
 	</select>
 </div>
-<button class='draw_scale_button' onclick='invokeMarkScale()'>Draw Scale</button>
+<button class='draw_scale_button' onclick='showReverseFinder()'>Find Scale</button>
 <button class='clear_markers_button' onclick='fretboard.clearMarkers()'>Clear Markers</button>
+<div id="reverseFinderContainer" style="z-index:2000;"></div>
 <footer id='footerx' style="text-align:center; padding:20px; font-size:12px;">Built by Tyler Markham &copy; 2025 | <a href="https://github.com/RRozz/Scale-Wizard">Source Code</a></footer>
 </body>
 </html>

@@ -123,6 +123,8 @@ function listContainingScales(noteSet){
 	console.log("Scale Search Report:");
 	for(var xint = 0, len = matchedScales.length;xint < len;xint++)
 		console.log(matchedScales[xint]);
+	
+	return matchedScales;
 }
 
 function noteNameListToIndexList(names){
